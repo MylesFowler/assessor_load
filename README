@@ -1,0 +1,92 @@
+README 
+## General info
+Project name: Assessor data v.1.0.0-a1
+This project classifies and collects data from the website:
+https://data.lacounty.gov/
+	
+## Technologies
+Project is created with:
+* RDBMS: MSSQL 15.0.18639.0
+* Scripting: Python 3.x (Pretty portable)
+
+	
+## Setup
+To run this project, install it locally in any directory:
+
+1. Spin up server (Google Cloud).
+2. SSH into instance.
+3. SCP project data to that instance location.
+4. Can be executed from any directory. Create a project folder
+if none exist.
+
+**mkdir rc
+  mkdir rc\projects
+  mkdir rc\projects\assessor_data
+
+## Executing SQL
+1. Run CreateSchema.sql
+2. Run the procedures (Designated 'proc') one by one in any order.
+
+## Executing Scripts:
+1. Run get_file_list.py
+* python get_file_list.py
+
+* This script gathers the files list data from the LA County
+here: "https://data.lacounty.gov/api/views/"
+
+    **Note, this data is updated from time to time and won't always be 
+    available since they are updating the file list with new data, 
+    I think....
+
+* On the initial run it creates a profile of all files designated
+as 'assetType' = 'filter'. This distills the list to files that we
+want specifically. If we need to open this for other assetTypes,
+I can do that later.
+
+* Once the data has been gathered as a json object it is transformed
+into a csv and loaded using the sql fn proc_loadAssessorFileData.sql.
+
+** Currently MSSQL pyodbc library does not allow me to read messages.
+Need to update this in the future to let me know if there is no new
+data loaded instead of running that in the next process. Might make
+an automated message that checks their api and alerts me when new 
+data is available.
+
+2. Run parcel_data_load.py 
+** Only year that currently loads is 2019.
+* python parcel_data_load.py 'YYYY'
+* python parcel_data_load.py '2019' 
+
+* This script utilizes data genereated and loaded via get_files_list.py
+script. Once that has been ran you can execute this to download the
+data of your choosing based on the year directly from the LA County Data
+site. It passes in the file_id that is in the auto generated table from
+the previous script 'property.AssessorDataView' to see if data exists.
+If exists, downloads that data directly from the LA County site and loads
+that to table 'property.parcel_data_2019'. You will be able to query that
+data:
+
+    ** SELECT COUNT(*) 
+       FROM property.parcel_data_2019 
+       WHERE taxrateareacity != 'LOS ANGELES'
+       
+       SELECT taxrateareacity, COUNT(*) total 
+       FROM property.ParcelData_2019 
+       group by taxrateareacity 
+       ORDER BY 2 DESC
+
+
+* In the command line you are able to view the status of this job.
+
+##To do
+
+* Combine both get_file_list.py and parcel_data_load.py into one script.
+  This started as one script but eventually became unwieldy so I broke it
+  up. Now that I have a better scope of what needs to be done, I can make
+  updates in the future to combine them. No reason these should be separate.
+
+* Clean up the code a bit in both scripts. Goes without saying.
+
+* Automate the creation of tables so that all the client has to do is call
+the job and wait for it to complete. Currently the way I was doing it was
+not all that secure or clean. Investigating better approaches to achieve this. 
