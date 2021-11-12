@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import os
 """ 
-#This is prod. Walter's Gcp instance...
+#The DB connection code. Place credentials here.
 class MSSQL: 
     server   = '' #escape backslash windows
     database = '' 
