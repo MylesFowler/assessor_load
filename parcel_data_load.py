@@ -21,29 +21,28 @@ def parse_args():
     param = sys.argv[1]
     return param
 
-def gather_file_data(param):
+def gather_file_data(param_year):
     """Check for NEW Assessor data and load if available."""
-    param = parse_args()
+    param_year = parse_args()
     with pyodbc.connect(CONNECTION_STRING) as conn:
         cursor = conn.cursor()
-        query_check_tbl = "IF EXISTS (SELECT * FROM sysobjects WHERE name = 'ParcelData_{}' AND xtype = 'U') SELECT 1 else SELECT 0".format(param)
+        query_check_tbl = "IF EXISTS (SELECT * FROM sysobjects WHERE name = 'ParcelData_{}' AND xtype = 'U') SELECT 1 else SELECT 0".format(param_year)
         query_check_file = "EXEC property.proc_AssessorFileYearCheck ?;"
         cursor.execute(query_check_tbl)
-        check_result = cursor.fetchall()
+        check_result = cursor.fetchone()
         for f in check_result:
             if f[0] ==1:
-                sys.exit('Data already exists. Exiting. Check SELECT TOP 1 * FROM property.ParcelData_{}'.format(param))
+                sys.exit('Data already exists. Exiting. Check SELECT TOP 1 * FROM property.ParcelData_{}'.format(param_year))
             else:
-                #cursor.execute()
-                cursor.execute(query_check_file,(param))
+                cursor.execute(query_check_file,(param_year))
                 result = cursor.fetchall()
                 if result:
                     for results in result:
                         data_id = "".join(list(results[0]))
                         data_filename = "".join(list(results[1]))
-                        return data_id, data_filename, param
+                        return data_id, data_filename, param_year
                 else:
-                    sys.exit("No new data for period {}. Exiting.".format(param))
+                    sys.exit("No new data for period {}. Exiting.".format(param_year))
 
 def download_data(file_id):
 
