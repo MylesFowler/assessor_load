@@ -64,12 +64,11 @@ def main():
         assessor_file_name = "List_of_Assesor_data_file-" \
                             + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".txt"
         full_path = os.path.join(ASSESSOR_DATA_PATH, assessor_file_name)
-        query = "EXEC property.proc_LoadAssessorFileData ?;"
+        query = "EXEC property.proc_LoadAssessorFileData '{}';".format(full_path)
         for i in data:
-            #This is wrong. I should not use append. But it works. FIX THIS. TAKE OUT OF LOOP.
             with open(assessor_file_name, "a") as files:
                 if i["assetType"][:8] == "filter":
                     files.write(i["id"] + "\t" + i["name"] + "\t" + i["assetType"] + "\n")    
-    conn_execute_query(CONNECTION_STRING, query, full_path)
+    conn_execute_query(CONNECTION_STRING, query)
 if __name__ == "__main__":
     main()
