@@ -1,3 +1,4 @@
+import datetime
 import gzip
 import os
 from pathlib import Path
@@ -25,14 +26,14 @@ def gather_file_data(param_year):
     with pyodbc.connect(CONNECTION_STRING) as conn:
         cursor = conn.cursor()
         query_check_tbl = "IF EXISTS (SELECT * FROM sysobjects WHERE name = 'ParcelData_{}' AND xtype = 'U') SELECT 1 else SELECT 0".format(param_year)
-        query_proc_gather_data = "EXEC property.proc_AssessorFileYearCheck ?;"
+        query_proc_gather_data = "EXEC property.proc_AssessorFileYearCheck {};".format(param_year)
         cursor.execute(query_check_tbl)
         check_result = cursor.fetchone()
         if check_result[0] ==1:
             sys.exit('Data already exists. Exiting. Check SELECT TOP 1 * FROM property.ParcelData_{}'.format(param_year))
         else:
             try:
-                cursor.execute(query_proc_gather_data,(param_year))
+                cursor.execute(query_proc_gather_data)
                 result = cursor.fetchone()
                 data_id = result[0]
                 data_filename = result[1]
@@ -41,7 +42,6 @@ def gather_file_data(param_year):
                    sys.exit("No new data for period {}. Exiting.".format(param_year))
 
 def download_data(file_id):
-
     """Download data"""
     file_id = formatted_file_id
     filename = formatted_filename
@@ -55,11 +55,12 @@ def load_file(filename,year):
         year = file_year
         filename = formatted_filename + '.tsv'
         abs_path = os.path.join(os.getcwd(),filename)
-        query = "EXEC property.proc_LoadParcelData ?, ?;"
+        query = "EXEC property.proc_LoadParcelData '{}', '{}';".format(year, abs_path)
+        print(query)
         cursor = conn.cursor()
         print(" Executing SQL.")
-        cursor.execute(query,(year, abs_path))
-        zip_filename = filename + '.gz'
+        cursor.execute(query)
+        zip_filename = datetime.datetime.now().strftime("%Y%m%d%H%M%S") +'_' + filename + '.gz'
         print("SQL completed. Compressing and moving file to processed directory.")
         with open(abs_path, 'rb') as data_in, gzip.open(zip_filename, 'wb') as data_out:
             data_in_file = data_in
