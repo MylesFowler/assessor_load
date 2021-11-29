@@ -90,3 +90,9 @@ data:
 * Automate the creation of tables so that all the client has to do is call
 the job and wait for it to complete. Currently the way I was doing it was
 not all that secure or clean. Investigating better approaches to achieve this. 
+
+* Parcel load.py: Change the try and except block. That is wrong.
+
+* Make a separate function for the sql cursor object.
+
+* Just make it dynamic and get it over with. This is intended for private use.
